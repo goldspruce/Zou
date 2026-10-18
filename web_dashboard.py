@@ -705,17 +705,17 @@ HTML_PAGE = """<!DOCTYPE html>
     // In-Browser Chat Agent Logic
     function formatMarkdown(text) {
       let html = text
-        .replace(/### (.*?)\\n/g, '<h3>$1</h3>')
-        .replace(/#### (.*?)\\n/g, '<h4>$1</h4>')
-        .replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')
-        .replace(/\\*(.*?)\\*/g, '<em>$1</em>')
+        .replace(/### (.*?)\n/g, '<h3>$1</h3>')
+        .replace(/#### (.*?)\n/g, '<h4>$1</h4>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
         .replace(/`([^`]+)`/g, '<code>$1</code>')
-        .replace(/> (.*?)\\n/g, '<blockquote>$1</blockquote>')
-        .replace(/\\n/g, '<br>');
+        .replace(/> (.*?)\n/g, '<blockquote>$1</blockquote>')
+        .replace(/\n/g, '<br>');
 
       // Convert Markdown tables
       if (text.includes('|')) {
-        const lines = text.split('\\n');
+        const lines = text.split('\n');
         let inTable = false;
         let tableHtml = '<table>';
         for (let l of lines) {
@@ -762,65 +762,178 @@ HTML_PAGE = """<!DOCTYPE html>
     }
 
     function clientProcessAgentMessage(query) {
-      const raw = query.trim();
+      var raw = query.trim();
       if (!raw) return { reply: "Please enter a question or command." };
-      const parts = raw.split(/\s+/);
-      const cmd = parts[0].toLowerCase();
-      const args = parts.slice(1);
+      var parts = raw.split(/\s+/);
+      var cmd = parts[0].toLowerCase();
+      var args = parts.slice(1);
 
       if (cmd === "jump") {
-        const f = parseFloat(args[0]);
+        var f = parseFloat(args[0]);
         if (isNaN(f)) return { reply: "Usage: `jump <frequency_hz>` (e.g. `jump 100`, `jump 85`)." };
-        const res = simJump(f);
+        var res = simJump(f);
         if (res.stuck) {
-          return { reply: "### 🦘 Ballistic Jump Simulation: " + f.toFixed(1) + " Hz\n\n**STATUS: STUCK AT 0.000 m (0% capacity)**\n\n> **Physiological Context:** Without an initial doublet to trigger the Ignition Phase, tetanic tension merely equalizes with body weight. Inertia is never broken." };
+          return { reply: [
+            "### 🦘 Ballistic Jump Simulation: " + f.toFixed(1) + " Hz",
+            "",
+            "**STATUS: STUCK AT 0.000 m (0% capacity)**",
+            "",
+            "> **Physiological Context:** Without an initial doublet to trigger the Ignition Phase, tetanic tension merely equalizes with body weight. Inertia is never broken."
+          ].join("\n") };
         }
-        return { reply: "### 🦘 Ballistic Jump Simulation: " + f.toFixed(1) + " Hz QID\n\n- **Initial Jerk (Hill Ca2+ cooperativity):** `" + Math.round(res.jerk) + " m/s³`\n- **Peak Sustained Acceleration (a_max):** `" + res.a_max.toFixed(2) + " m/s²`\n- **Takeoff Time (t_exit):** `" + res.t_exit.toFixed(1) + " ms`\n- **Exit Velocity (v_exit):** `" + res.v_exit.toFixed(2) + " m/s`\n- **Net Jump Clearance (h):** `" + res.h.toFixed(2) + " m` (**" + res.cap.toFixed(1) + "%** of baseline)\n\n> **Physiological Context:** " + res.note };
+        return { reply: [
+          "### 🦘 Ballistic Jump Simulation: " + f.toFixed(1) + " Hz QID",
+          "",
+          "- **Initial Jerk (Hill Ca2+ cooperativity):** `" + Math.round(res.jerk) + " m/s³`",
+          "- **Peak Sustained Acceleration (a_max):** `" + res.a_max.toFixed(2) + " m/s²`",
+          "- **Takeoff Time (t_exit):** `" + res.t_exit.toFixed(1) + " ms`",
+          "- **Exit Velocity (v_exit):** `" + res.v_exit.toFixed(2) + " m/s`",
+          "- **Net Jump Clearance (h):** `" + res.h.toFixed(2) + " m` (**" + res.cap.toFixed(1) + "%** of baseline)",
+          "",
+          "> **Physiological Context:** " + res.note
+        ].join("\n") };
       }
 
       if (cmd === "epsp") {
-        const f = parseFloat(args[0]);
-        const tau = args[1] ? parseFloat(args[1]) : 4.0;
+        var f = parseFloat(args[0]);
+        var tau = args[1] ? parseFloat(args[1]) : 4.0;
         if (isNaN(f)) return { reply: "Usage: `epsp <frequency_hz> [tau_ms]` (e.g. `epsp 200`, `epsp 150`)." };
-        const res = simEpsp(f, tau);
-        const badge = res.primed ? "✅ PRIMED TO THRESHOLD" : "⚠️ SUBTHRESHOLD DEFICIT";
-        return { reply: "### ⚡ UMN Temporal Summation: " + f.toFixed(1) + " Hz (tau = " + tau.toFixed(1) + " ms)\n\n**Status:** " + badge + "\n\n- **Inter-Spike Interval (dt):** `" + res.dt.toFixed(2) + " ms`\n- **Synaptic Retention (r):** `" + (res.r * 100).toFixed(1) + "%`\n- **Summation Multiplier (M):** `" + res.m.toFixed(4) + "`\n- **Primed Potential (Vm):** `" + res.vm.toFixed(2) + " mV` (Rest: -65 mV -> Target: -55 mV)\n- **Summation Gain Collapse:** `" + res.collapse.toFixed(1) + "%`\n\n> **Physiological Impact:** " + res.impact };
+        var res = simEpsp(f, tau);
+        var badge = res.primed ? "✅ PRIMED TO THRESHOLD" : "⚠️ SUBTHRESHOLD DEFICIT";
+        return { reply: [
+          "### ⚡ UMN Temporal Summation: " + f.toFixed(1) + " Hz (tau = " + tau.toFixed(1) + " ms)",
+          "",
+          "**Status:** " + badge,
+          "",
+          "- **Inter-Spike Interval (dt):** `" + res.dt.toFixed(2) + " ms`",
+          "- **Synaptic Retention (r):** `" + (res.r * 100).toFixed(1) + "%`",
+          "- **Summation Multiplier (M):** `" + res.m.toFixed(4) + "`",
+          "- **Primed Potential (Vm):** `" + res.vm.toFixed(2) + " mV` (Rest: -65 mV -> Target: -55 mV)",
+          "- **Summation Gain Collapse:** `" + res.collapse.toFixed(1) + "%`",
+          "",
+          "> **Physiological Impact:** " + res.impact
+        ].join("\n") };
       }
 
       if (cmd === "age") {
-        const age = parseInt(args[0]);
-        const isAth = args[1] ? parseInt(args[1]) === 1 : true;
+        var age = parseInt(args[0]);
+        var isAth = args[1] ? parseInt(args[1]) === 1 : true;
         if (isNaN(age)) return { reply: "Usage: `age <years> [athlete_0_or_1]` (e.g. `age 55`, `age 70 1`)." };
-        const res = simAge(age, isAth);
-        const tier = isAth ? "Masters Athlete" : "General Population";
-        const loss = (100.0 - res.jump.cap).toFixed(1);
-        return { reply: "### ⏳ Lifespan Dynapenia Profile: Age " + age + " (" + tier + ")\n\n- **Estimated LMN QID Firing Rate:** `" + res.freq.toFixed(1) + " Hz`\n- **Expected Vertical Jump Height:** `" + res.jump.h.toFixed(2) + " m` (**" + res.jump.cap.toFixed(1) + "%** capacity remaining)\n- **Net Ballistic Power Loss:** `" + loss + "%`\n- **Takeoff Velocity:** `" + res.jump.v_exit.toFixed(2) + " m/s`\n\n> **Clinical Status:** " + res.note };
+        var res = simAge(age, isAth);
+        var tier = isAth ? "Masters Athlete" : "General Population";
+        var loss = (100.0 - res.jump.cap).toFixed(1);
+        return { reply: [
+          "### ⏳ Lifespan Dynapenia Profile: Age " + age + " (" + tier + ")",
+          "",
+          "- **Estimated LMN QID Firing Rate:** `" + res.freq.toFixed(1) + " Hz`",
+          "- **Expected Vertical Jump Height:** `" + res.jump.h.toFixed(2) + " m` (**" + res.jump.cap.toFixed(1) + "%** capacity remaining)",
+          "- **Net Ballistic Power Loss:** `" + loss + "%`",
+          "- **Takeoff Velocity:** `" + res.jump.v_exit.toFixed(2) + " m/s`",
+          "",
+          "> **Clinical Status:** " + res.note
+        ].join("\n") };
       }
 
       if (cmd === "subsystems" || cmd === "subsystem") {
-        return { reply: "### 🧠 The Four Neural Subsystems of the Quick Initial Doublet\n\n#### 🔹 Lower Motor Neurons (LMN) & Skeletal Muscle\n- **Doublet:** `100 Hz (10 ms ISI)` | **Trailing:** `25 Hz`\n- **Phase Transition:** Relaxed/eccentric to instantaneous concentric muscle tetanus.\n- **Mechanism:** Exploits troponin C Ca2+ cooperativity (Hill exponent ~2.22) for 445 m/s³ jerk.\n\n#### 🔹 Upper Motor Neurons (UMN) / Corticospinal Engine-Start\n- **Doublet:** `200 Hz (5 ms ISI)` | **Trailing:** Single spikes\n- **Phase Transition:** Subthreshold priming waking up quiescent LMNs from -65 mV to -55 mV.\n\n#### 🔹 Ventral Cochlear Nucleus Octopus Cells\n- **Doublet:** `300 Hz (~3.3 ms ISI)` | **Trailing:** Quiescence\n- **Phase Transition:** Knock-knock coincidence detection for sub-millisecond ITD sound localization.\n\n#### 🔹 Cortical PV+ Interneurons\n- **Doublet:** `300 Hz (~3.3 ms ISI)` | **Trailing:** 25 ms silence\n- **Phase Transition:** Clockwork pendulum escapement pacing pyramidal neurons to 40 Hz gamma rhythm." };
+        return { reply: [
+          "### 🧠 The Four Neural Subsystems of the Quick Initial Doublet",
+          "",
+          "#### 🔹 Lower Motor Neurons (LMN) & Skeletal Muscle",
+          "- **Doublet:** `100 Hz (10 ms ISI)` | **Trailing:** `25 Hz`",
+          "- **Phase Transition:** Relaxed/eccentric to instantaneous concentric muscle tetanus.",
+          "- **Mechanism:** Exploits troponin C Ca2+ cooperativity (Hill exponent ~2.22) for 445 m/s³ jerk.",
+          "",
+          "#### 🔹 Upper Motor Neurons (UMN) / Corticospinal Engine-Start",
+          "- **Doublet:** `200 Hz (5 ms ISI)` | **Trailing:** Single spikes",
+          "- **Phase Transition:** Subthreshold priming waking up quiescent LMNs from -65 mV to -55 mV.",
+          "",
+          "#### 🔹 Ventral Cochlear Nucleus Octopus Cells",
+          "- **Doublet:** `300 Hz (~3.3 ms ISI)` | **Trailing:** Quiescence",
+          "- **Phase Transition:** Knock-knock coincidence detection for sub-millisecond ITD sound localization.",
+          "",
+          "#### 🔹 Cortical PV+ Interneurons",
+          "- **Doublet:** `300 Hz (~3.3 ms ISI)` | **Trailing:** 25 ms silence",
+          "- **Phase Transition:** Clockwork pendulum escapement pacing pyramidal neurons to 40 Hz gamma rhythm."
+        ].join("\n") };
       }
 
       if (cmd === "benchmarks" || cmd === "matrix") {
-        return { reply: "### 📊 Replicated Manuscript Benchmarks (Appendix D)\n\n| Regime | QID Freq | Jerk (m/s³) | Accel (m/s²) | Takeoff (ms) | Vel (m/s) | Jump Height |\n| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n| **100% Baseline** | 100.0 Hz | 445.0 | 22.25 | 224.0 | 4.43 | **1.00 m (100%)** |\n| **Moderate (10% drop)** | 90.0 Hz | 327.0 | 16.71 | 255.3 | 3.84 | **0.75 m (75%)** |\n| **Intermediate (20% drop)** | 80.0 Hz | 224.0 | 11.76 | 300.3 | 3.22 | **0.53 m (53%)** |\n| **Non-Linear (25% drop)** | 75.0 Hz | 185.0 | 9.87 | 325.9 | 2.95 | **0.44 m (44%)** |\n| **Systemic Crash (50%)** | 50.0 Hz | 39.0 | 2.34 | 645.1 | 1.44 | **0.11 m (11%)** |\n| **Absolute Baseline (Tonic)** | 25.0 Hz | 0.0 | 0.00 | Stuck | 0.00 | **0.00 m (0%)** |" };
+        return { reply: [
+          "### 📊 Replicated Manuscript Benchmarks (Appendix D)",
+          "",
+          "| Regime | QID Freq | Jerk (m/s³) | Accel (m/s²) | Takeoff (ms) | Vel (m/s) | Jump Height |",
+          "| :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
+          "| **100% Baseline** | 100.0 Hz | 445.0 | 22.25 | 224.0 | 4.43 | **1.00 m (100%)** |",
+          "| **Moderate (10% drop)** | 90.0 Hz | 327.0 | 16.71 | 255.3 | 3.84 | **0.75 m (75%)** |",
+          "| **Intermediate (20% drop)** | 80.0 Hz | 224.0 | 11.76 | 300.3 | 3.22 | **0.53 m (53%)** |",
+          "| **Non-Linear (25% drop)** | 75.0 Hz | 185.0 | 9.87 | 325.9 | 2.95 | **0.44 m (44%)** |",
+          "| **Systemic Crash (50%)** | 50.0 Hz | 39.0 | 2.34 | 645.1 | 1.44 | **0.11 m (11%)** |",
+          "| **Absolute Baseline (Tonic)** | 25.0 Hz | 0.0 | 0.00 | Stuck | 0.00 | **0.00 m (0%)** |"
+        ].join("\n") };
       }
 
-      const qLower = raw.toLowerCase();
-      if (qLower.includes("octopus") || qLower.includes("auditory") || qLower.includes("cochlear") || qLower.includes("sound")) {
-        return { reply: "### 🦻 Auditory Octopus Cells: Temporal Coincidence Detection\n\n- **Doublet Firing Rate:** `300 Hz (~3.3 ms ISI)`\n- **Phase Transition:** Marking salient acoustic transients contrasted against background noise.\n- **Function:** Octopus cells act like a \"knock-knock\" double tap, providing sub-millisecond temporal resolution for Interaural Time Difference (ITD) sound localization in noisy environments." };
-      }
-      if (qLower.includes("pv+") || qLower.includes("gamma") || qLower.includes("escapement") || qLower.includes("interneuron")) {
-        return { reply: "### ⏱️ Cortical PV+ Interneurons: 40 Hz Gamma Escapement\n\n- **Doublet Firing Rate:** `300 Hz (~3.3 ms ISI)`\n- **Phase Transition:** From active cognitive processing to dead silence.\n- **Function:** Analogous to a clockwork pendulum escapement, the inhibitory doublet clamps pyramidal neurons and paces them into synchronized 40 Hz gamma oscillations for cognitive binding." };
-      }
-      if (qLower.includes("dynapenia") || qLower.includes("sarcopenia")) {
-        return { reply: "### 🩺 Dynapenia vs. Sarcopenia in the QID Paradigm\n\n- **Dynapenia** is the loss of muscle **power** (force development speed).\n- **Sarcopenia** is the macroscopic loss of muscle **mass**.\n\nDynapenia frequently *precedes* sarcopenia. When FF motor neurons experience age-related underclocking (e.g. 100 Hz -> 80 Hz), non-linear Ca2+ Hill cooperativity (n ≈ 2.22) causes an immediate **47% loss in explosive jump power**, even while muscle mass remains intact." };
+      var qLower = raw.toLowerCase();
+      var tokens = raw.split(/\s+/);
+      for (var i = 0; i < tokens.length; i++) {
+        var clean = tokens[i].replace(/hz/i, '').replace(/[.,]/g, '');
+        var val = parseFloat(clean);
+        if (!isNaN(val) && val >= 25 && val <= 120 && (qLower.indexOf('jump') !== -1 || qLower.indexOf('height') !== -1 || qLower.indexOf('clearance') !== -1 || qLower.indexOf('takeoff') !== -1)) {
+          return clientProcessAgentMessage("jump " + val);
+        }
+        if (!isNaN(val) && val >= 40 && val <= 300 && (qLower.indexOf('epsp') !== -1 || qLower.indexOf('umn') !== -1 || qLower.indexOf('priming') !== -1 || qLower.indexOf('depolarization') !== -1)) {
+          return clientProcessAgentMessage("epsp " + val);
+        }
+        if (!isNaN(val) && val >= 20 && val <= 95 && (qLower.indexOf('age') !== -1 || qLower.indexOf('year') !== -1 || qLower.indexOf('old') !== -1 || qLower.indexOf('dynapenia') !== -1)) {
+          return clientProcessAgentMessage("age " + Math.round(val));
+        }
       }
 
-      return { reply: "### 📖 Quick Initial Doublet Virtual Co-Author\n\nI can discuss theoretical mechanisms and run live biophysical simulations from the manuscript: *The Quick Initial Doublet: A Common Mechanism Across Neural Subsystems*.\n\n**Try asking:**\n- `jump 85` (ballistic jump simulation)\n- `epsp 150` (UMN temporal summation)\n- `age 70 1` (masters athlete aging trajectory)\n- `subsystems` (4 neural subsystems comparison)\n- `benchmarks` (Appendix D benchmark matrix)\n- Or ask about octopus cells, PV+ gamma interneurons, or dynapenia!" };
+      if (qLower.indexOf('octopus') !== -1 || qLower.indexOf('auditory') !== -1 || qLower.indexOf('cochlear') !== -1 || qLower.indexOf('sound') !== -1) {
+        return { reply: [
+          "### 🦻 Auditory Octopus Cells: Temporal Coincidence Detection",
+          "",
+          "- **Doublet Firing Rate:** `300 Hz (~3.3 ms ISI)`",
+          "- **Phase Transition:** Marking salient acoustic transients contrasted against background noise.",
+          "- **Function:** Octopus cells act like a 'knock-knock' double tap, providing sub-millisecond temporal resolution for Interaural Time Difference (ITD) sound localization in noisy environments."
+        ].join("\n") };
+      }
+      if (qLower.indexOf('pv+') !== -1 || qLower.indexOf('gamma') !== -1 || qLower.indexOf('escapement') !== -1 || qLower.indexOf('interneuron') !== -1) {
+        return { reply: [
+          "### ⏱️ Cortical PV+ Interneurons: 40 Hz Gamma Escapement",
+          "",
+          "- **Doublet Firing Rate:** `300 Hz (~3.3 ms ISI)`",
+          "- **Phase Transition:** From active cognitive processing to dead silence.",
+          "- **Function:** Analogous to a clockwork pendulum escapement, the inhibitory doublet clamps pyramidal neurons and paces them into synchronized 40 Hz gamma oscillations for cognitive binding."
+        ].join("\n") };
+      }
+      if (qLower.indexOf('dynapenia') !== -1 || qLower.indexOf('sarcopenia') !== -1) {
+        return { reply: [
+          "### 🩺 Dynapenia vs. Sarcopenia in the QID Paradigm",
+          "",
+          "- **Dynapenia** is the loss of muscle **power** (force development speed).",
+          "- **Sarcopenia** is the macroscopic loss of muscle **mass**.",
+          "",
+          "Dynapenia frequently *precedes* sarcopenia. When FF motor neurons experience age-related underclocking (e.g. 100 Hz -> 80 Hz), non-linear Ca2+ Hill cooperativity (n ≈ 2.22) causes an immediate **47% loss in explosive jump power**, even while muscle mass remains intact."
+        ].join("\n") };
+      }
+
+      return { reply: [
+        "### 📖 Quick Initial Doublet Virtual Co-Author",
+        "",
+        "I can discuss theoretical mechanisms and run live biophysical simulations from the manuscript: *The Quick Initial Doublet: A Common Mechanism Across Neural Subsystems*.",
+        "",
+        "**Try asking:**",
+        "- `jump 85` (ballistic jump simulation)",
+        "- `epsp 150` (UMN temporal summation)",
+        "- `age 70 1` (masters athlete aging trajectory)",
+        "- `subsystems` (4 neural subsystems comparison)",
+        "- `benchmarks` (Appendix D benchmark matrix)",
+        "- Or ask about octopus cells, PV+ gamma interneurons, or dynapenia!"
+      ].join("\n") };
     }
 
     function getClientVerificationData() {
-      const checks = [
+      var checks = [
         { name: "Unitary EPSP E0", actual: "7.135", expected: "7.135", diff: "err=0.00%", passed: true },
         { name: "Baseline Gain G200", actual: "0.402", expected: "0.402", diff: "err=0.01%", passed: true },
         { name: "200Hz Retention (r200)", actual: "0.287", expected: "0.286", diff: "err=0.00%", passed: true },
