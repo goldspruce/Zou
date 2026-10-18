@@ -184,7 +184,7 @@ def cmd_benchmarks():
     print()
 
 
-def main():
+def run_cli():
     print_banner()
     while True:
         try:
@@ -225,5 +225,20 @@ def main():
             break
 
 
+def main():
+    if "--cli" in sys.argv or "-c" in sys.argv:
+        run_cli()
+    else:
+        # Default: Launch In-Browser Agent and automatically open web browser
+        import web_dashboard
+        port = 8080
+        for arg in sys.argv[1:]:
+            if arg.isdigit():
+                port = int(arg)
+                break
+        web_dashboard.run(port=port, auto_open=True)
+
+
 if __name__ == "__main__":
     main()
+

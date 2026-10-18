@@ -1128,15 +1128,35 @@ class AppHandler(BaseHTTPRequestHandler):
         return
 
 
-def run(port=8080):
+def open_browser(port: int):
+    import time
+    import webbrowser
+    time.sleep(0.5)
+    try:
+        webbrowser.open(f"http://localhost:{port}")
+    except Exception:
+        pass
+
+
+def run(port=8080, auto_open=True):
+    if auto_open:
+        import threading
+        threading.Thread(target=open_browser, args=(port,), daemon=True).start()
+
     server = HTTPServer(("", port), AppHandler)
-    print(f"[Paper2Agent Web Server] Serving In-Browser QID Agent on http://localhost:{port}")
+    print("=" * 80)
+    print(f" [Paper2Agent] Serving In-Browser QID Agent on http://localhost:{port}")
+    print(" Opening your web browser automatically...")
+    print(" (Press Ctrl+C to shut down the server)")
+    print("=" * 80)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\n[Paper2Agent Web Server] Shutting down.")
+        print("\n[Paper2Agent] Server shut down.")
 
 
 if __name__ == "__main__":
-    p = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
-    run(p)
+    p = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 8080
+    no_browser = "--no-browser" in sys.argv
+    run(p, auto_open=not no_browser)
+
