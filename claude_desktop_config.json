@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "qid-paper2agent": {
+      "command": "python3",
+      "args": [
+        "/Users/rhl/Documents/Zou/mcp_server.py"
+      ]
+    }
+  }
+}
