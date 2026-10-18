@@ -679,42 +679,66 @@
 
     // In-Browser Chat Agent Logic
     function formatMarkdown(text) {
-      let html = text
-        .replace(/### (.*?)\n/g, '<h3>$1</h3>')
-        .replace(/#### (.*?)\n/g, '<h4>$1</h4>')
+      if (!text) return "";
+      const lines = text.split('\n');
+      let out = [];
+      let inTable = false;
+
+      for (let i = 0; i < lines.length; i++) {
+        let line = lines[i].trim();
+
+        // Table row check
+        if (line.startsWith('|') && line.endsWith('|')) {
+          if (line.includes('---')) continue;
+          const cells = line.split('|').slice(1, -1).map(c => c.trim());
+          if (!inTable) {
+            inTable = true;
+            out.push('<table><thead><tr>' + cells.map(c => '<th>' + c + '</th>').join('') + '</tr></thead><tbody>');
+          } else {
+            out.push('<tr>' + cells.map(c => '<td>' + c + '</td>').join('') + '</tr>');
+          }
+          continue;
+        } else if (inTable) {
+          inTable = false;
+          out.push('</tbody></table>');
+        }
+
+        // Headers
+        if (line.startsWith('### ')) {
+          out.push('<h3>' + line.slice(4) + '</h3>');
+          continue;
+        }
+        if (line.startsWith('#### ')) {
+          out.push('<h4>' + line.slice(5) + '</h4>');
+          continue;
+        }
+        if (line.startsWith('> ')) {
+          out.push('<blockquote>' + line.slice(2) + '</blockquote>');
+          continue;
+        }
+        if (line.startsWith('- ')) {
+          out.push('• ' + line.slice(2) + '<br>');
+          continue;
+        }
+
+        if (line === '') {
+          out.push('<br>');
+          continue;
+        }
+
+        out.push(line + '<br>');
+      }
+
+      if (inTable) out.push('</tbody></table>');
+
+      let rawHtml = out.join('');
+      // Inlines
+      rawHtml = rawHtml
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/`([^`]+)`/g, '<code>$1</code>')
-        .replace(/> (.*?)\n/g, '<blockquote>$1</blockquote>')
-        .replace(/\n/g, '<br>');
+        .replace(/`([^`]+)`/g, '<code>$1</code>');
 
-      // Convert Markdown tables
-      if (text.includes('|')) {
-        const lines = text.split('\n');
-        let inTable = false;
-        let tableHtml = '<table>';
-        for (let l of lines) {
-          l = l.trim();
-          if (l.startsWith('|') && l.endsWith('|')) {
-            if (l.includes('---')) continue;
-            const cells = l.split('|').slice(1, -1).map(c => c.trim());
-            if (!inTable) {
-              inTable = true;
-              tableHtml += '<thead><tr>' + cells.map(c => '<th>' + c + '</th>').join('') + '</tr></thead><tbody>';
-            } else {
-              tableHtml += '<tr>' + cells.map(c => '<td>' + c + '</td>').join('') + '</tr>';
-            }
-          } else if (inTable) {
-            inTable = false;
-            tableHtml += '</tbody></table>';
-          }
-        }
-        if (inTable) tableHtml += '</tbody></table>';
-        if (tableHtml.includes('<tr>')) {
-          html = tableHtml;
-        }
-      }
-      return html;
+      return rawHtml;
     }
 
     function appendMessage(role, rawContent) {

@@ -226,10 +226,7 @@ def run_cli():
 
 
 def main():
-    if "--cli" in sys.argv or "-c" in sys.argv:
-        run_cli()
-    else:
-        # Default: Launch In-Browser Agent and automatically open web browser
+    if "--web" in sys.argv or "-w" in sys.argv:
         import web_dashboard
         port = 8080
         for arg in sys.argv[1:]:
@@ -237,8 +234,12 @@ def main():
                 port = int(arg)
                 break
         web_dashboard.run(port=port, auto_open=True)
+    else:
+        # Default: Pure, reliable local interactive terminal CLI
+        run_cli()
 
 
 if __name__ == "__main__":
     main()
+
 
